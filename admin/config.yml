@@ -3,14 +3,7 @@
 
 backend:
   name: git-gateway
-
-local_backend: true
-
-# Uncomment and set for GitHub when you deploy:
-# backend:
-#   name: github
-#   repo: your-username/inkedfeed
-#   branch: main
+  branch: main
 
 media_folder: "src/images/uploads"
 public_folder: "/images/uploads"
@@ -29,7 +22,6 @@ collections:
     fields:
       - { label: "Layout", name: "layout", widget: "hidden", default: "post.liquid" }
       - { label: "Title", name: "title", widget: "string" }
-      - { label: "Author", name: "author", widget: "string", required: false, hint: "Author name (optional)" }
       - { label: "Publish Date", name: "date", widget: "datetime" }
       - { label: "Excerpt", name: "excerpt", widget: "text", hint: "Short summary for the home page grid" }
       - { label: "Featured Image", name: "image", widget: "image", required: false, hint: "Grid thumbnail (e.g. /images/uploads/photo.jpg)" }
