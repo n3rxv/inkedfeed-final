@@ -1,0 +1,22 @@
+---
+layout: layout.liquid
+---
+
+<article class="content">
+  <h1 class="post-title-lg">{{ title }}</h1>
+
+  <div class="post-meta-row">
+    <span>{{ date | date: "%B %d, %Y" }}</span>
+    {% if author %}
+    <span> • {{ author }}</span>
+    {% endif %}
+  </div>
+
+  {% if heroImage %}
+  <div class="post-hero">
+    <img src="{{ heroImage }}" alt="">
+  </div>
+  {% endif %}
+
+  {{ content }}
+</article>

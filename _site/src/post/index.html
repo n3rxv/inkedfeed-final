@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Post Preview</title>
+    <style>
+      :root {
+        --bg: #000000;
+        --panel: #0a0a0a;
+        --text: #e6e6e6;
+        --muted: #a3a3a3;
+        --accent: #46f1c0;
+        --border: #1a1a1a;
+        --radius: 10px;
+      }
+      [data-theme="light"] {
+        --bg: #f7f7f7;
+        --panel: #ffffff;
+        --text: #111111;
+        --muted: #5a5a5a;
+        --accent: #0a6c57;
+        --border: #dddddd;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font: 16px/1.7 "DejaVu Sans Mono", "DejaVu Sans", "Ubuntu Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      a:active { opacity: 0.7; }
+      a {
+        position: relative;
+        display: inline-block;
+        overflow: hidden;
+      }
+      a::after {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -75%;
+        width: 50%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent 0%, rgba(255,200,200,0.35) 50%, transparent 100%);
+        transform: translateX(0);
+        opacity: 0;
+        pointer-events: none;
+      }
+      a:hover::after {
+        animation: link-shine 650ms ease;
+      }
+      @keyframes link-shine {
+        0% { opacity: 0; transform: translateX(0); }
+        15% { opacity: 1; }
+        100% { opacity: 0; transform: translateX(260%); }
+      }
+
+      .wrap {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 36px 20px 72px;
+      }
+
+      header.site {
+        padding-bottom: 18px;
+        margin-bottom: 26px;
+      }
+      .header-divider {
+        width: 100vw;
+        margin-left: calc(50% - 50vw);
+        margin-right: calc(50% - 50vw);
+        border-bottom: 1px solid var(--border);
+        margin-top: 16px;
+      }
+      .header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .header-left {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .menu-toggle {
+        border: 1px solid var(--accent);
+        background: var(--panel);
+        color: var(--text);
+        width: 40px;
+        height: 40px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 120ms ease, box-shadow 160ms ease, border-color 160ms ease;
+      }
+      .menu-toggle:hover { border-color: var(--accent); }
+      .menu-toggle:active {
+        transform: scale(0.92);
+        box-shadow: 0 0 0 3px rgba(70, 241, 192, 0.15);
+      }
+      .menu-toggle svg { width: 20px; height: 20px; display: block; }
+
+      .side-menu {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 280px;
+        background: var(--panel);
+        border-right: 1px solid var(--border);
+        transform: translateX(-100%);
+        transition: transform 220ms ease;
+        z-index: 50;
+        padding: 24px;
+      }
+      .side-menu.is-open { transform: translateX(0); }
+      .side-menu h2 {
+        margin: 0 0 16px;
+        font-size: 18px;
+      }
+      .side-menu a {
+        color: var(--text);
+        text-decoration: none;
+        display: block;
+        padding: 8px 0;
+      }
+      .side-menu a:hover { color: var(--accent); text-decoration: none; }
+      .side-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 220ms ease;
+        z-index: 40;
+      }
+      .side-backdrop.is-open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .header-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .site-title {
+        font-size: 26px;
+        letter-spacing: 0.4px;
+        margin: 0 0 6px;
+      }
+      .site-title a { color: inherit; text-decoration: none; }
+      .site-title a:hover { color: inherit; text-decoration: none; }
+      .typewriter {
+        display: inline-block;
+        overflow: hidden;
+        white-space: nowrap;
+        width: 0;
+        animation: typing 2.6s steps(9, end) forwards;
+      }
+      @keyframes typing {
+        from { width: 0; }
+        to { width: 9ch; }
+      }
+      .site-desc { color: var(--muted); margin: 0; }
+
+      nav.menu {
+        margin-top: 12px;
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      nav.menu a { color: var(--text); }
+      nav.menu a:hover { color: var(--accent); text-decoration: none; }
+
+      .theme-toggle {
+        border: 1px solid var(--accent);
+        background: var(--panel);
+        color: var(--text);
+        width: 40px;
+        height: 40px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-start;
+        cursor: pointer;
+        overflow: hidden;
+        gap: 8px;
+        padding: 0 10px;
+        transition: width 180ms ease, transform 120ms ease, box-shadow 160ms ease, border-color 160ms ease;
+      }
+      .search-toggle {
+        border: 1px solid var(--accent);
+        background: var(--panel);
+        color: var(--text);
+        width: 260px;
+        height: 40px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-start;
+        cursor: text;
+        overflow: hidden;
+        gap: 8px;
+        padding: 0 8px;
+        transition: width 180ms ease, transform 120ms ease, box-shadow 160ms ease, border-color 160ms ease;
+      }
+      .search-toggle:hover,
+      .search-toggle:focus-within {
+        border-color: var(--accent);
+      }
+      .search-toggle input {
+        border: 0;
+        background: transparent;
+        color: var(--text);
+        outline: none;
+        width: 180px;
+        opacity: 1;
+        transition: opacity 140ms ease;
+        pointer-events: auto;
+      }
+      .search-toggle input::placeholder {
+        color: var(--muted);
+      }
+      .search-toggle:active {
+        transform: scale(0.98);
+        box-shadow: 0 0 0 3px rgba(70, 241, 192, 0.15);
+      }
+      .search-toggle svg { width: 18px; height: 18px; display: block; }
+      .search-toggle svg * { stroke-width: 1.6; }
+      .icon-swap {
+        position: relative;
+        width: 18px;
+        height: 18px;
+        display: inline-block;
+        flex: 0 0 auto;
+      }
+      .icon-swap svg {
+        position: absolute;
+        inset: 0;
+        width: 18px;
+        height: 18px;
+        opacity: 0;
+        transition: opacity 120ms ease;
+      }
+      .theme-toggle .toggle-text {
+        font-size: 11px;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        white-space: nowrap;
+        opacity: 0;
+        transform: translateX(6px);
+        transition: opacity 160ms ease, transform 160ms ease;
+      }
+      :root:not([data-theme="light"]) .theme-toggle .icon-moon { opacity: 1; }
+      :root:not([data-theme="light"]) .theme-toggle .icon-sun { opacity: 0; }
+      :root:not([data-theme="light"]) .theme-toggle:hover .icon-moon { opacity: 0; }
+      :root:not([data-theme="light"]) .theme-toggle:hover .icon-sun { opacity: 1; }
+      :root[data-theme="light"] .theme-toggle .icon-moon { opacity: 0; }
+      :root[data-theme="light"] .theme-toggle .icon-sun { opacity: 1; }
+      :root[data-theme="light"] .theme-toggle:hover .icon-moon { opacity: 1; }
+      :root[data-theme="light"] .theme-toggle:hover .icon-sun { opacity: 0; }
+      .theme-toggle:hover {
+        border-color: var(--accent);
+        width: 170px;
+      }
+      .theme-toggle:hover .toggle-text {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      .toggle-text-light,
+      .toggle-text-dark { display: none; }
+      :root:not([data-theme="light"]) .theme-toggle:hover .toggle-text-dark { display: inline; }
+      :root[data-theme="light"] .theme-toggle:hover .toggle-text-light { display: inline; }
+      .theme-toggle:active {
+        transform: scale(0.92);
+        box-shadow: 0 0 0 3px rgba(70, 241, 192, 0.15);
+      }
+
+      .content {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 28px 26px;
+      }
+      .post-title-lg {
+        font-size: 30px;
+        margin: 0 0 10px;
+        letter-spacing: 0.3px;
+      }
+      .post-meta-row {
+        color: var(--muted);
+        font-size: 13px;
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+        align-items: center;
+      }
+      .special-tag {
+        margin-left: auto;
+        color: var(--accent);
+        border: 1px solid var(--accent);
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+      }
+      .post-hero {
+        margin: 12px 0 18px;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        background: #080808;
+      }
+      .post-hero img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .post-tags {
+        margin-top: 14px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        font-size: 12px;
+      }
+      .post-tags a {
+        color: var(--muted);
+        border: 1px solid var(--border);
+        padding: 3px 8px;
+        border-radius: 999px;
+        text-decoration: none;
+      }
+      .post-tags a:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+        text-decoration: none;
+      }
+      .post-body p { margin: 0 0 14px; }
+      .post-body img { max-width: 100%; height: auto; border-radius: 6px; }
+      .post-body code {
+        background: #111;
+        border: 1px solid var(--border);
+        padding: 2px 5px;
+        border-radius: 4px;
+      }
+      .post-body pre {
+        background: #0d0d0d;
+        border: 1px solid var(--border);
+        padding: 14px;
+        border-radius: 8px;
+        overflow: auto;
+      }
+      .post-body blockquote {
+        margin: 16px 0;
+        padding: 10px 14px;
+        border-left: 3px solid var(--accent);
+        color: var(--muted);
+        background: #080808;
+      }
+      .marquee-grid {
+        margin-top: 24px;
+      }
+      .marquee-grid.full-bleed {
+        width: 100vw;
+        margin-left: calc(50% - 50vw);
+        margin-right: calc(50% - 50vw);
+        padding: 0 20px;
+      }
+      .marquee-viewport {
+        overflow: hidden;
+      }
+      .marquee-track {
+        display: flex;
+        gap: 20px;
+        will-change: transform;
+      }
+      .marquee-card {
+        position: relative;
+        flex: 0 0 calc((100% - 40px) / 3);
+        height: 200px;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        background: #080808;
+        transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+      }
+      .marquee-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .marquee-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,0.45);
+      }
+      .marquee-title {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-size: 18px;
+        color: #ffffff;
+        letter-spacing: 0.4px;
+        padding: 0 12px;
+        z-index: 1;
+      }
+      .marquee-card:hover {
+        transform: scale(1.03);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+      }
+      .marquee-card:hover .marquee-title { color: var(--accent); }
+      @media (max-width: 980px) {
+        .marquee-card { flex: 0 0 calc((100% - 20px) / 2); }
+      }
+      @media (max-width: 640px) {
+        .marquee-card { flex: 0 0 100%; }
+      }
+
+      footer.site {
+        margin-top: 38px;
+        padding-top: 16px;
+        color: var(--muted);
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .footer-divider {
+        width: 100vw;
+        margin-left: calc(50% - 50vw);
+        margin-right: calc(50% - 50vw);
+        border-top: 1px solid var(--border);
+        margin-top: 38px;
+      }
+      footer.site a {
+        color: var(--muted);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      footer.site a svg {
+        width: 14px;
+        height: 14px;
+        display: block;
+      }
+      footer.site a:hover {
+        color: var(--accent);
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="side-menu" id="sideMenu">
+      <h2>Menu</h2>
+      <a href="preview.html">Home</a>
+      <a href="#">About</a>
+      <a href="#">Archive</a>
+      <a href="#">Contact</a>
+    </div>
+    <div class="side-backdrop" id="sideBackdrop"></div>
+    <div class="wrap">
+      <header class="site">
+        <div class="header-row">
+          <div class="header-left">
+            <h1 class="site-title"><a href="preview.html"><span class="typewriter">inkedfeed.</span></a></h1>
+          </div>
+          <div class="header-actions">
+            <form class="search-toggle" action="preview.html" method="get" role="search">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                <path d="M16.5 16.5L21 21" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+              <input name="q" type="search" placeholder="Search" />
+            </form>
+            <button class="menu-toggle" id="menuToggle" type="button" aria-label="Open menu">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle theme">
+              <span class="icon-swap" aria-hidden="true">
+                <svg class="icon-moon" viewBox="0 0 24 24">
+                  <path d="M21 14.5A8.5 8.5 0 0 1 9.5 3a7 7 0 1 0 11.5 11.5Z" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                </svg>
+                <svg class="icon-sun" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                  <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <span class="toggle-text">
+                <span class="toggle-text-dark">Mint</span>
+                <span class="toggle-text-light">Amoled</span>
+              </span>
+            </button>
+          </div>
+        </div>
+        <p class="site-desc">write white, love black.</p>
+        <nav class="menu">
+          <a href="preview.html">Home</a>
+          <a href="#">About</a>
+          <a href="#">Archive</a>
+        </nav>
+        <div class="header-divider"></div>
+      </header>
+
+      <main>
+        <article class="content">
+          <h1 class="post-title-lg">First Post: Building a Calm Writing Space</h1>
+          <div class="post-meta-row">
+            <span>February 8, 2026</span>
+            <span>Ruben</span>
+            <span class="special-tag" data-label="Special: Interview"></span>
+          </div>
+          <div class="post-hero">
+            <img alt="Featured image" src="https://picsum.photos/1200/630?random=1" />
+          </div>
+          <div class="post-body">
+            <p>This is a full post preview that shows how longer content feels within the
+            boxed layout. The intent is calm, minimal reading with clear rhythm.</p>
+          </div>
+          <div class="post-tags">
+            <a href="#">writing</a>
+            <a href="#">design</a>
+            <a href="#">minimal</a>
+          </div>
+        </article>
+        <div class="marquee-grid full-bleed">
+          <div class="marquee-viewport">
+            <div class="marquee-track" id="relatedTrack">
+              <a class="marquee-card" href="post.html">
+                <img alt="Drift" src="https://picsum.photos/900/700?random=31" />
+                <div class="marquee-title">Drift Notes</div>
+              </a>
+              <a class="marquee-card" href="post.html">
+                <img alt="Focus" src="https://picsum.photos/900/700?random=32" />
+                <div class="marquee-title">Focus Pages</div>
+              </a>
+              <a class="marquee-card" href="post.html">
+                <img alt="Night" src="https://picsum.photos/900/700?random=33" />
+                <div class="marquee-title">Night Writing</div>
+              </a>
+              <a class="marquee-card" href="post.html">
+                <img alt="Quiet" src="https://picsum.photos/900/700?random=34" />
+                <div class="marquee-title">Quiet Interfaces</div>
+              </a>
+              <a class="marquee-card" href="post.html">
+                <img alt="Edges" src="https://picsum.photos/900/700?random=35" />
+                <div class="marquee-title">Edges & Space</div>
+              </a>
+              <a class="marquee-card" href="post.html">
+                <img alt="Morning" src="https://picsum.photos/900/700?random=36" />
+                <div class="marquee-title">Morning Notes</div>
+              </a>
+              <a class="marquee-card" href="post.html">
+                <img alt="Drift" src="https://picsum.photos/900/700?random=31" />
+                <div class="marquee-title">Drift Notes</div>
+              </a>
+              <a class="marquee-card" href="post.html">
+                <img alt="Focus" src="https://picsum.photos/900/700?random=32" />
+                <div class="marquee-title">Focus Pages</div>
+              </a>
+              <a class="marquee-card" href="post.html">
+                <img alt="Night" src="https://picsum.photos/900/700?random=33" />
+                <div class="marquee-title">Night Writing</div>
+              </a>
+              <a class="marquee-card" href="post.html">
+                <img alt="Quiet" src="https://picsum.photos/900/700?random=34" />
+                <div class="marquee-title">Quiet Interfaces</div>
+              </a>
+              <a class="marquee-card" href="post.html">
+                <img alt="Edges" src="https://picsum.photos/900/700?random=35" />
+                <div class="marquee-title">Edges & Space</div>
+              </a>
+              <a class="marquee-card" href="post.html">
+                <img alt="Morning" src="https://picsum.photos/900/700?random=36" />
+                <div class="marquee-title">Morning Notes</div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <div class="footer-divider"></div>
+      <footer class="site">
+        <div>Designed with ❤ by Ruben</div>
+        <a href="https://www.instagram.com/nirxv_03" rel="noopener" target="_blank">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="4" y="4" width="16" height="16" rx="4" ry="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+            <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+            <circle cx="17.2" cy="6.8" r="1.2" fill="currentColor"/>
+          </svg>
+          Instagram
+        </a>
+      </footer>
+    </div>
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var btn = document.getElementById("themeToggle");
+        var stored = localStorage.getItem("theme");
+        if (stored === "light") {
+          root.setAttribute("data-theme", "light");
+        }
+        btn.addEventListener("click", function () {
+          var isLight = root.getAttribute("data-theme") === "light";
+          if (isLight) {
+            root.removeAttribute("data-theme");
+            localStorage.setItem("theme", "dark");
+          } else {
+            root.setAttribute("data-theme", "light");
+            localStorage.setItem("theme", "light");
+          }
+        });
+      })();
+    </script>
+    <script>
+      (function () {
+        var toggle = document.getElementById("menuToggle");
+        var menu = document.getElementById("sideMenu");
+        var backdrop = document.getElementById("sideBackdrop");
+        if (!toggle || !menu || !backdrop) return;
+        function openMenu() {
+          menu.classList.add("is-open");
+          backdrop.classList.add("is-open");
+        }
+        function closeMenu() {
+          menu.classList.remove("is-open");
+          backdrop.classList.remove("is-open");
+        }
+        toggle.addEventListener("click", openMenu);
+        backdrop.addEventListener("click", closeMenu);
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") closeMenu();
+        });
+      })();
+    </script>
+    <script>
+      (function () {
+        var tags = document.querySelectorAll(".special-tag[data-label]");
+        tags.forEach(function (el) {
+          var raw = el.getAttribute("data-label") || "";
+          el.textContent = raw.replace(/^Special:\s*/i, "");
+        });
+      })();
+    </script>
+    <script>
+      (function () {
+        var track = document.getElementById("relatedTrack");
+        if (!track) return;
+        var cards = Array.prototype.slice.call(track.querySelectorAll(".marquee-card"));
+        if (!cards.length) return;
+        var offset = 0;
+        var speed = 0.35;
+        var rowWidth = 0;
+        var last = null;
+        function getGap() {
+          var gap = getComputedStyle(track).gap || "20px";
+          return parseFloat(gap) || 20;
+        }
+        function measure() {
+          var card = track.querySelector(".marquee-card");
+          if (!card) return;
+          var cardWidth = card.getBoundingClientRect().width;
+          rowWidth = (cardWidth + getGap()) * (cards.length / 2);
+        }
+        function tick(ts) {
+          if (!last) last = ts;
+          var delta = ts - last;
+          last = ts;
+          offset -= (speed * delta) / 16;
+          if (Math.abs(offset) >= rowWidth) offset = 0;
+          track.style.transform = "translateX(" + offset + "px)";
+          requestAnimationFrame(tick);
+        }
+        window.addEventListener("resize", measure);
+        measure();
+        requestAnimationFrame(tick);
+      })();
+    </script>
+  </body>
+</html>

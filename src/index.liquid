@@ -1,0 +1,97 @@
+---
+layout: layout.liquid
+title: Home
+---
+
+<div class="home-layout">
+  <div class="home-main">
+    {% assign rotatorPosts = collections.posts | where: "data.rotator", true %}
+    {% if rotatorPosts.size > 0 %}
+    <div class="rotator" id="postRotator">
+      <div class="rotator-track">
+        {% for post in rotatorPosts %}
+        <div class="rotator-item">
+          <div class="rotator-media">
+            <a href="{{ post.url }}"><img alt="Featured image" src="{{ post.data.heroImage | default: post.data.image }}" /></a>
+          </div>
+          <div class="rotator-overlay"></div>
+          <h3 class="rotator-title"><a href="{{ post.url }}">{{ post.data.title }}</a></h3>
+          <ul class="rotator-points">
+            {% for point in post.data.rotatorPoints %}
+            <li><a href="{{ post.url }}">{{ point.point | default: point }}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="rotator-dots" id="rotatorDots"></div>
+    </div>
+    {% endif %}
+
+    <div class="post-grid">
+      {% for post in collections.posts %}
+      <article class="post">
+        <a class="card-link" href="{{ post.url }}" aria-label="Read post"></a>
+        {% if post.data.image or post.data.heroImage %}
+        <div class="post-media">
+          <a href="{{ post.url }}"><img alt="Featured image" src="{{ post.data.image | default: post.data.heroImage }}" /></a>
+        </div>
+        {% endif %}
+        <h3 class="post-title"><a href="{{ post.url }}">{{ post.data.title }}</a></h3>
+        <div class="post-meta">
+          {{ post.date | date: "%B %d, %Y" }}
+          {% if post.data.author %} • {{ post.data.author }}{% endif %}
+        </div>
+        <div class="post-body">
+          {% if post.data.excerpt %}
+          <p>{{ post.data.excerpt }}</p>
+          {% endif %}
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+
+    <div class="pager">
+      <a href="/archive/">Older posts</a>
+      <a href="#">Newer posts</a>
+    </div>
+
+    {% if collections.posts.size > 0 %}
+    <div class="special-slider full-bleed" id="specialSlider">
+      <div class="special-viewport">
+        <div class="special-track" id="specialTrack">
+          {% for post in collections.posts limit: 5 %}
+          <a class="special-card" href="{{ post.url }}">
+            <img alt="{{ post.data.specialTag | default: post.data.title }}" src="{{ post.data.heroImage | default: post.data.image | default: 'https://picsum.photos/800/600?random=1' }}" />
+            <div class="special-card-title"><span>{{ post.data.specialTag | default: post.data.title }}</span></div>
+          </a>
+          {% endfor %}
+          {% for post in collections.posts limit: 5 %}
+          <a class="special-card" href="{{ post.url }}">
+            <img alt="{{ post.data.specialTag | default: post.data.title }}" src="{{ post.data.heroImage | default: post.data.image | default: 'https://picsum.photos/800/600?random=2' }}" />
+            <div class="special-card-title"><span>{{ post.data.specialTag | default: post.data.title }}</span></div>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <aside class="home-side">
+    <div class="day-box">
+      <h3 class="day-title">Do You Know?</h3>
+      <ul class="day-list" id="dayList">
+        <li>Loading…</li>
+      </ul>
+    </div>
+    <div class="popular-box">
+      <h3 class="popular-title">Popular this month</h3>
+      {% assign firstPost = collections.posts | first %}
+      <a class="popular-card" id="popularCard" href="{% if firstPost %}{{ firstPost.url }}{% else %}#{% endif %}">
+        <img id="popularImg" alt="Popular post" src="https://picsum.photos/800/500?random=41"/>
+        <div class="popular-card-title" id="popularTitle">Quiet Interfaces</div>
+      </a>
+    </div>
+  </aside>
+</div>
