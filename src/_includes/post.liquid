@@ -1,3 +1,13 @@
+
+{% if featured_image and featured_image.src %}
+<figure class="post-image">
+  <img src="{{ featured_image.src }}" alt="{{ featured_image.alt | default: title }}">
+  {% if featured_image.caption %}
+  <figcaption>{{ featured_image.caption }}</figcaption>
+  {% endif %}
+</figure>
+{% endif %}
+
 ---
 layout: layout.liquid
 ---
