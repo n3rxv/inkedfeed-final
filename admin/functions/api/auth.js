@@ -46,20 +46,32 @@ export async function onRequestGet(context) {
         <body>
           <script>
             (function() {
-              function recieveMessage(e) {
-                console.log("recieveMessage %o", e);
-                window.opener.postMessage(
-                  'authorization:github:success:${JSON.stringify({
-                    token: data.access_token,
-                    provider: 'github'
-                  })}',
-                  e.origin
-                );
-                window.removeEventListener("message", recieveMessage, false);
+              function receiveMessage(e) {
+                console.log("receiveMessage", e);
+                if (e.data === "authorizing:github") {
+                  window.postMessage(
+                    'authorization:github:success:' + JSON.stringify({
+                      token: "${data.access_token}",
+                      provider: "github"
+                    }),
+                    "*"
+                  );
+                }
               }
-              window.addEventListener("message", recieveMessage, false);
-              console.log("Sending message: %o", "github");
+              window.addEventListener("message", receiveMessage, false);
+              
+              // Trigger the auth success immediately
               window.opener.postMessage("authorizing:github", "*");
+              
+              setTimeout(function() {
+                window.opener.postMessage(
+                  'authorization:github:success:' + JSON.stringify({
+                    token: "${data.access_token}",
+                    provider: "github"
+                  }),
+                  window.opener.origin
+                );
+              }, 100);
             })();
           </script>
         </body>
