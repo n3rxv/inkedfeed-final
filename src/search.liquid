@@ -1,0 +1,150 @@
+---
+layout: layout.liquid
+title: Search Results
+---
+
+<style>
+  .search-results {
+    margin: 32px 0;
+  }
+  .search-query {
+    color: var(--accent);
+    font-weight: bold;
+  }
+  .search-result-item {
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--panel);
+    transition: border-color 200ms ease;
+  }
+  .search-result-item:hover {
+    border-color: var(--accent);
+  }
+  .search-result-title {
+    margin: 0 0 8px;
+    font-size: 20px;
+  }
+  .search-result-title a {
+    color: var(--text);
+  }
+  .search-result-excerpt {
+    color: var(--muted);
+    margin: 0;
+  }
+  .search-result-date {
+    color: var(--muted);
+    font-size: 14px;
+    margin-top: 8px;
+  }
+  .no-results {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .search-input-large {
+    width: 100%;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--panel);
+    color: var(--text);
+    font-size: 16px;
+    font-family: inherit;
+    margin-bottom: 24px;
+  }
+  .search-input-large:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+</style>
+
+<div class="search-page">
+  <h1>Search Posts</h1>
+  
+  <input 
+    type="search" 
+    id="searchInputLarge" 
+    class="search-input-large" 
+    placeholder="Type to search posts..." 
+    autofocus
+  />
+  
+  <div id="searchResults" class="search-results"></div>
+</div>
+
+<script>
+(function() {
+  // Get all posts data from the page
+  var postsData = [
+    {% for post in collections.posts %}
+    {
+      title: {{ post.data.title | json }},
+      url: "{{ post.url }}",
+      excerpt: {{ post.data.excerpt | default: "" | json }},
+      date: "{{ post.data.date | date: '%B %d, %Y' }}",
+      content: {{ post.templateContent | strip_html | json }}
+    }{% unless forloop.last %},{% endunless %}
+    {% endfor %}
+  ];
+  
+  var searchInput = document.getElementById('searchInputLarge');
+  var resultsDiv = document.getElementById('searchResults');
+  var urlParams = new URLSearchParams(window.location.search);
+  var initialQuery = urlParams.get('q') || '';
+  
+  if (initialQuery) {
+    searchInput.value = initialQuery;
+    performSearch(initialQuery);
+  }
+  
+  searchInput.addEventListener('input', function() {
+    var query = this.value.trim();
+    if (query.length > 0) {
+      performSearch(query);
+      // Update URL without reload
+      var newUrl = window.location.pathname + '?q=' + encodeURIComponent(query);
+      window.history.replaceState({}, '', newUrl);
+    } else {
+      resultsDiv.innerHTML = '';
+    }
+  });
+  
+  function performSearch(query) {
+    query = query.toLowerCase();
+    
+    var results = postsData.filter(function(post) {
+      return post.title.toLowerCase().includes(query) ||
+             post.excerpt.toLowerCase().includes(query) ||
+             post.content.toLowerCase().includes(query);
+    });
+    
+    displayResults(results, query);
+  }
+  
+  function displayResults(results, query) {
+    if (results.length === 0) {
+      resultsDiv.innerHTML = 
+        '<div class="no-results">' +
+        '<h2>No results found</h2>' +
+        '<p>Try searching for something else</p>' +
+        '</div>';
+      return;
+    }
+    
+    var html = '<h2>Found ' + results.length + ' result' + (results.length !== 1 ? 's' : '') + ' for <span class="search-query">"' + query + '"</span></h2>';
+    
+    results.forEach(function(post) {
+      html += 
+        '<div class="search-result-item">' +
+        '<h3 class="search-result-title"><a href="' + post.url + '">' + post.title + '</a></h3>' +
+        '<p class="search-result-excerpt">' + post.excerpt + '</p>' +
+        '<div class="search-result-date">' + post.date + '</div>' +
+        '</div>';
+    });
+    
+    resultsDiv.innerHTML = html;
+  }
+})();
+</script>
