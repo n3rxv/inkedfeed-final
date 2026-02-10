@@ -2,7 +2,8 @@
 # Use this admin to create and edit posts without touching markdown.
 
 backend:
-  name: git-gateway
+  name: github
+  repo: n3rxv/inkedfeed-final
   branch: main
 
 media_folder: "src/images/uploads"
