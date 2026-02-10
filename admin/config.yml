@@ -26,6 +26,8 @@ collections:
       - { label: "Excerpt", name: "excerpt", widget: "text", hint: "Short summary for the home page grid" }
       - { label: "Featured Image", name: "image", widget: "image", required: false, hint: "Grid thumbnail (e.g. /images/uploads/photo.jpg)" }
       - { label: "Hero Image", name: "heroImage", widget: "image", required: false, hint: "Large image for post header and rotator" }
+      - { label: "Image Caption", name: "imageCaption", widget: "string", required: false, hint: "Caption text displayed below the hero image" }
+      - { label: "Image Alt Text", name: "imageAlt", widget: "string", required: false, hint: "Alt text for accessibility (defaults to post title)" }
       - { label: "Show in rotator?", name: "rotator", widget: "boolean", default: false }
       - label: "Rotator points"
         name: "rotatorPoints"
