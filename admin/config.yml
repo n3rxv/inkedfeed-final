@@ -5,6 +5,8 @@ backend:
   name: github
   repo: n3rxv/inkedfeed-final
   branch: main
+  base_url: https://inkedfeed.pages.dev
+  auth_endpoint: /api/auth
 
 media_folder: "src/images/uploads"
 public_folder: "/images/uploads"
