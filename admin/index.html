@@ -187,8 +187,12 @@
     .publish-btn { width: 100%; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); padding: 10px; font-family: var(--font-sans); font-size: 13.5px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 7px; }
     .publish-btn:hover { background: var(--accent-soft); }
     .publish-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .save-draft-btn { width: 100%; background: transparent; color: var(--gold); border: 1px solid rgba(212,168,67,0.3); border-radius: var(--radius-sm); padding: 9px; font-family: var(--font-sans); font-size: 13px; cursor: pointer; transition: all 0.15s; }
+    .save-draft-btn:hover { background: rgba(212,168,67,0.08); border-color: var(--gold); }
+    .save-draft-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .delete-btn { width: 100%; background: transparent; color: #e05a3a; border: 1px solid rgba(224,90,58,0.25); border-radius: var(--radius-sm); padding: 9px; font-family: var(--font-sans); font-size: 13px; cursor: pointer; transition: all 0.15s; }
     .delete-btn:hover { background: rgba(224,90,58,0.1); border-color: var(--accent); }
+    .draft-pill { font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 20px; background: rgba(212,168,67,0.15); color: var(--gold); flex-shrink: 0; }
     .status-indicator { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-muted); padding: 8px 12px; background: var(--bg-raised); border-radius: var(--radius-sm); }
     .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
     .status-dot.draft { background: var(--gold); }
@@ -279,6 +283,11 @@
         All Posts
         <span class="sidebar-badge" id="posts-count">—</span>
       </div>
+      <div class="sidebar-item" onclick="navigate('drafts')" id="nav-drafts">
+        <svg class="sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        Drafts
+        <span class="sidebar-badge" id="drafts-count" style="background:var(--gold);display:none">0</span>
+      </div>
       <div class="sidebar-item" onclick="navigate('new-post')" id="nav-new-post">
         <svg class="sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
         New Post
@@ -363,6 +372,7 @@ function buildMD(p) {
     `date: ${p.date||new Date().toISOString()}`,
     `author: "${p.author||''}"`
   ];
+  if(p.draft) lines.push(`draft: true`);
   if(p.image) lines.push(`image: "${p.image}"`);
   if(p.imageAlt) lines.push(`imageAlt: "${p.imageAlt}"`);
   if(p.description) lines.push(`description: "${(p.description||'').replace(/"/g,'\\"')}"`);
@@ -401,7 +411,10 @@ function logout() { localStorage.removeItem('if_token'); location.reload(); }
 async function boot() {
   showLoad(true);
   S.posts = await loadPosts();
-  document.getElementById('posts-count').textContent = S.posts.length;
+  document.getElementById('posts-count').textContent = S.posts.filter(p=>!p.draft).length;
+  const draftCount = S.posts.filter(p=>p.draft==='true'||p.draft===true).length;
+  const draftBadge = document.getElementById('drafts-count');
+  if(draftCount>0){ draftBadge.textContent=draftCount; draftBadge.style.display=''; }
   const init = (S.user.name||S.user.login||'R').charAt(0).toUpperCase();
   document.getElementById('topbar-avatar').textContent = init;
   document.getElementById('sidebar-avatar').textContent = init;
@@ -418,11 +431,12 @@ function navigate(page, data=null) {
   S.page=page;
   document.querySelectorAll('.sidebar-item').forEach(e=>e.classList.remove('active'));
   const el=document.getElementById(`nav-${page}`); if(el)el.classList.add('active');
-  const labels={dashboard:'Dashboard',posts:'All Posts','new-post':'New Post','edit-post':'Edit Post'};
+  const labels={dashboard:'Dashboard',posts:'All Posts',drafts:'Drafts','new-post':'New Post','edit-post':'Edit Post'};
   document.getElementById('topbar-page').textContent=labels[page]||page;
   const m=document.getElementById('main-content');
   if(page==='dashboard') renderDash(m);
-  else if(page==='posts') renderList(m);
+  else if(page==='posts') renderList(m,false);
+  else if(page==='drafts') renderList(m,true);
   else if(page==='new-post') renderEditor(m,null);
   else if(page==='edit-post') renderEditor(m,data);
 }
@@ -436,8 +450,8 @@ function renderDash(c) {
       <button class="btn-primary" onclick="navigate('new-post')">+ New Post</button>
     </div>
     <div class="stats-row">
-      <div class="stat-card"><div class="stat-label">Total Posts</div><div class="stat-value">${S.posts.length}</div><div class="stat-note">All time</div></div>
-      <div class="stat-card"><div class="stat-label">Published</div><div class="stat-value">${S.posts.length}</div><div class="stat-note" style="color:var(--gold)">All live</div></div>
+      <div class="stat-card"><div class="stat-label">Published</div><div class="stat-value">${S.posts.filter(p=>!p.draft||p.draft==='false').length}</div><div class="stat-note">All time</div></div>
+      <div class="stat-card"><div class="stat-label">Drafts</div><div class="stat-value">${S.posts.filter(p=>p.draft==='true'||p.draft===true).length}</div><div class="stat-note" style="color:var(--gold)">Saved locally</div></div>
       <div class="stat-card"><div class="stat-label">Repository</div><div class="stat-value" style="font-size:17px;padding-top:6px">${REPO}</div><div class="stat-note" style="color:var(--blue)">${BRANCH} branch</div></div>
       <div class="stat-card"><div class="stat-label">Hosted On</div><div class="stat-value" style="font-size:17px;padding-top:6px">CF Pages</div><div class="stat-note" style="color:var(--green)">Auto-deploy ✓</div></div>
     </div>
@@ -448,7 +462,7 @@ function renderDash(c) {
           <div class="post-row" onclick="navigate('edit-post',${JSON.stringify(p).replace(/"/g,'&quot;')})">
             <div class="post-emoji">${emojis[i%emojis.length]}</div>
             <div class="post-info"><div class="post-name">${esc(p.title||'Untitled')}</div><div class="post-date">${esc(p.author||'')} · ${fmtDate(p.date)}</div></div>
-            <span class="post-pill">Published</span>
+            <span class="${p.draft==='true'||p.draft===true?'draft-pill':'post-pill'}">${p.draft==='true'||p.draft===true?'Draft':'Published'}</span>
             <button class="btn-edit" onclick="event.stopPropagation();navigate('edit-post',${JSON.stringify(p).replace(/"/g,'&quot;')})">✏</button>
           </div>`).join('')}
       </div>
@@ -464,23 +478,24 @@ function renderDash(c) {
     </div>`;
 }
 
-function renderList(c) {
+function renderList(c, draftsOnly=false) {
+  const filtered = draftsOnly ? S.posts.filter(p=>p.draft==='true'||p.draft===true) : S.posts.filter(p=>!p.draft||p.draft==='false');
   c.innerHTML=`
     <div class="page-header">
-      <div><div class="page-title">All Posts</div><div class="page-sub">${S.posts.length} post${S.posts.length!==1?'s':''}</div></div>
+      <div><div class="page-title">${draftsOnly?'Drafts':'All Posts'}</div><div class="page-sub">${filtered.length} ${draftsOnly?'draft':'published post'}${filtered.length!==1?'s':''}</div></div>
       <button class="btn-primary" onclick="navigate('new-post')">+ New Post</button>
     </div>
-    ${S.posts.length===0?`<div class="empty-state" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius)"><div class="empty-icon">📝</div><div class="empty-title">No posts yet</div></div>`:`
+    ${filtered.length===0?`<div class="empty-state" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius)"><div class="empty-icon">${draftsOnly?'📝':'✍'}</div><div class="empty-title">${draftsOnly?'No drafts':'No published posts'}</div></div>`:`
     <div class="posts-grid">
-      ${S.posts.map((p,i)=>`
+      ${filtered.map((p,i)=>`
         <div class="pgr">
           <div class="pgr-num">${i+1}</div>
           <div class="pgr-title">${esc(p.title||'Untitled')}</div>
           <div class="pgr-author">${esc(p.author||'—')}</div>
           <div class="pgr-date">${fmtDate(p.date)}</div>
           <div class="pgr-actions">
-            <button class="btn-edit" onclick="navigate('edit-post',${JSON.stringify(p).replace(/"/g,'&quot;')})">✏</button>
-            <button class="btn-del" onclick="confirmDel(${JSON.stringify(p).replace(/"/g,'&quot;')})">🗑</button>
+            <button class="btn-edit" title="Edit" onclick="navigate('edit-post',${JSON.stringify(p).replace(/"/g,'&quot;')})">✏</button>
+            <button class="btn-del" title="Delete" onclick="confirmDel(${JSON.stringify(p).replace(/"/g,'&quot;')})">🗑</button>
           </div>
         </div>`).join('')}
     </div>`}`;
@@ -541,8 +556,9 @@ function renderEditor(c, post) {
         <div class="side-card">
           <div class="side-card-header">Publish</div>
           <div class="side-card-body">
-            <div class="status-indicator"><div class="status-dot ${isNew?'draft':''}" id="status-dot"></div><span id="status-text">${isNew?'New Draft':'Published'}</span></div>
-            <button class="publish-btn" id="pub-btn" onclick="doPublish(${isNew})"><span id="pub-txt">${isNew?'🚀 Publish to GitHub':'💾 Save Changes'}</span></button>
+            <div class="status-indicator"><div class="status-dot ${isNew?'draft':p.draft==='true'||p.draft===true?'draft':''}" id="status-dot"></div><span id="status-text">${isNew?'New Draft':p.draft==='true'||p.draft===true?'Draft':'Published'}</span></div>
+            <button class="publish-btn" id="pub-btn" onclick="doPublish(${isNew},false)"><span id="pub-txt">${isNew?'🚀 Publish Post':'💾 Save Changes'}</span></button>
+            <button class="save-draft-btn" id="draft-btn" onclick="doPublish(${isNew},true)"><span id="draft-txt">📝 Save as Draft</span></button>
             ${!isNew?`<button class="delete-btn" onclick="confirmDel(${JSON.stringify(p).replace(/"/g,'&quot;')})">🗑 Delete Post</button>`:''}
           </div>
         </div>
@@ -627,7 +643,7 @@ function updateImg() {
   p.innerHTML=url?`<img src="${url}" onerror="this.style.display='none'">`:`<div class="img-placeholder"><div class="img-placeholder-icon">🖼</div><div>Enter URL below</div></div>`;
 }
 
-async function doPublish(isNew) {
+async function doPublish(isNew, asDraft=false) {
   if(S.saving)return;
   const title=document.getElementById('f-title').value.trim();
   if(!title)return toast('Please enter a title','error');
@@ -644,33 +660,50 @@ async function doPublish(isNew) {
     heroImage:document.getElementById('f-heroImage').value.trim(),
     specialTag:document.getElementById('f-specialTag').value.trim(),
     rotator:document.getElementById('f-rotator').checked,
+    draft: asDraft,
     body:document.getElementById('f-body').value,
     _slug:slug, _path:`${POSTS}/${slug}.md`,
     _sha:isNew?null:S.editing?._sha
   };
 
   S.saving=true;
-  const btn=document.getElementById('pub-btn'), txt=document.getElementById('pub-txt'), dot=document.getElementById('status-dot');
-  btn.disabled=true; txt.innerHTML='<div class="spinner"></div>';
-  if(dot){dot.className='status-dot saving';}
+  const btn=document.getElementById('pub-btn'), txt=document.getElementById('pub-txt');
+  const draftBtn=document.getElementById('draft-btn'), draftTxt=document.getElementById('draft-txt');
+  const dot=document.getElementById('status-dot');
+  btn.disabled=true; draftBtn.disabled=true;
+  if(asDraft) draftTxt.innerHTML='<div class="spinner"></div>';
+  else txt.innerHTML='<div class="spinner"></div>';
+  if(dot) dot.className='status-dot saving';
 
   try {
     const content=buildMD(post);
     const encoded=btoa(unescape(encodeURIComponent(content)));
-    const body={message:isNew?`New post: ${title}`:`Update: ${title}`, content:encoded, branch:BRANCH};
+    const body={message:asDraft?`Draft: ${title}`:isNew?`New post: ${title}`:`Update: ${title}`, content:encoded, branch:BRANCH};
     if(post._sha) body.sha=post._sha;
     await gh(`/repos/${OWNER}/${REPO}/contents/${post._path}`,{method:'PUT',body:JSON.stringify(body)});
     S.posts=await loadPosts();
-    document.getElementById('posts-count').textContent=S.posts.length;
-    toast(isNew?'🚀 Published to GitHub! Site rebuilding…':'✅ Saved to GitHub!','success');
-    txt.textContent=isNew?'🚀 Publish to GitHub':'💾 Save Changes';
-    if(dot){dot.className='status-dot'; document.getElementById('status-text').textContent='Published';}
-    if(isNew)setTimeout(()=>navigate('posts'),1500);
+    const pubCount=S.posts.filter(p=>!p.draft||p.draft==='false').length;
+    const draftCount=S.posts.filter(p=>p.draft==='true'||p.draft===true).length;
+    document.getElementById('posts-count').textContent=pubCount;
+    const db=document.getElementById('drafts-count');
+    if(draftCount>0){db.textContent=draftCount;db.style.display='';}else{db.style.display='none';}
+    if(asDraft){
+      toast('📝 Saved as draft on GitHub','success');
+      draftTxt.textContent='📝 Save as Draft';
+      if(dot){dot.className='status-dot draft'; document.getElementById('status-text').textContent='Draft';}
+    } else {
+      toast(isNew?'🚀 Published to GitHub! Site rebuilding…':'✅ Saved to GitHub!','success');
+      txt.textContent=isNew?'🚀 Publish Post':'💾 Save Changes';
+      if(dot){dot.className='status-dot'; document.getElementById('status-text').textContent='Published';}
+    }
+    if(isNew&&!asDraft) setTimeout(()=>navigate('posts'),1500);
+    if(isNew&&asDraft) setTimeout(()=>navigate('drafts'),1500);
   } catch(e) {
     toast('Error: '+e.message,'error');
-    txt.textContent=isNew?'🚀 Publish to GitHub':'💾 Save Changes';
+    txt.textContent=isNew?'🚀 Publish Post':'💾 Save Changes';
+    draftTxt.textContent='📝 Save as Draft';
   }
-  btn.disabled=false; S.saving=false;
+  btn.disabled=false; draftBtn.disabled=false; S.saving=false;
 }
 
 let pendingDel=null;
