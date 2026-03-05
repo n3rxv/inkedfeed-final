@@ -203,8 +203,13 @@
     .img-preview img { width: 100%; height: 100%; object-fit: cover; }
     .img-placeholder { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--text-muted); font-size: 12px; }
     .img-placeholder-icon { font-size: 24px; opacity: 0.4; }
-    .img-url-input { background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; font-family: var(--font-sans); font-size: 12px; color: var(--text); outline: none; transition: border 0.15s; width: 100%; }
-    .img-url-input:focus { border-color: var(--border-focus); }
+    .img-upload-btn { width: 100%; background: var(--bg-raised); border: 1px dashed var(--border); border-radius: var(--radius-sm); padding: 9px; font-family: var(--font-sans); font-size: 12px; color: var(--text-muted); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .img-upload-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-pale); }
+    .img-upload-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .img-upload-progress { width: 100%; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; display: none; }
+    .img-upload-progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
+    .img-divider { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-muted); }
+    .img-divider::before, .img-divider::after { content:''; flex:1; height:1px; background: var(--border); }
     .back-btn { display: inline-flex; align-items: center; gap: 6px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); border-radius: var(--radius-sm); padding: 8px 16px; font-family: var(--font-sans); font-size: 13px; cursor: pointer; transition: all 0.15s; }
     .back-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
 
@@ -530,6 +535,8 @@ function renderEditor(c, post) {
               <div class="md-sep"></div>
               <button class="md-btn" onclick="mdLink()">🔗</button>
               <button class="md-btn" onclick="mdImg()">🖼</button>
+              <button class="md-btn" title="Upload image to GitHub" onclick="triggerInlineUpload()" id="upload-inline-btn">⬆</button>
+              <input type="file" id="inline-img-input" accept="image/*" style="display:none" onchange="uploadInlineImage(this)">
               <button class="md-btn" onclick="mdLine('> ')">❝</button>
               <button class="md-btn" onclick="mdWrap('\`','\`')">⌨</button>
               <button class="md-btn" onclick="mdLine('- ')">•</button>
@@ -574,8 +581,12 @@ function renderEditor(c, post) {
           <div class="side-card-header">Featured Image</div>
           <div class="side-card-body">
             <div class="img-preview" id="img-preview">
-              ${p.image?`<img src="${esc(p.image)}">`:`<div class="img-placeholder"><div class="img-placeholder-icon">🖼</div><div>Enter URL below</div></div>`}
+              ${p.image?`<img src="${esc(p.image)}">`:`<div class="img-placeholder"><div class="img-placeholder-icon">🖼</div><div>Click upload or paste URL</div></div>`}
             </div>
+            <input type="file" id="featured-img-input" accept="image/*" style="display:none" onchange="uploadFeaturedImage(this)">
+            <button class="img-upload-btn" id="featured-upload-btn" onclick="document.getElementById('featured-img-input').click()">⬆ Upload Image to GitHub</button>
+            <div class="img-upload-progress" id="featured-upload-progress"><div class="img-upload-progress-fill" id="featured-upload-fill"></div></div>
+            <div class="img-divider">or</div>
             <input class="img-url-input" id="f-image" type="url" placeholder="https://…" value="${esc(p.image||'')}" oninput="updateImg()">
             <div class="field-group"><label class="field-label">Alt Text</label><input class="field-input" id="f-imageAlt" type="text" value="${esc(p.imageAlt||'')}"></div>
           </div>
@@ -641,6 +652,96 @@ function updateImg() {
   const url=document.getElementById('f-image').value;
   const p=document.getElementById('img-preview'); if(!p)return;
   p.innerHTML=url?`<img src="${url}" onerror="this.style.display='none'">`:`<div class="img-placeholder"><div class="img-placeholder-icon">🖼</div><div>Enter URL below</div></div>`;
+}
+
+// ═══════════════════════════════════════════
+// IMAGE UPLOAD TO GITHUB
+// ═══════════════════════════════════════════
+async function uploadImageToGitHub(file, onProgress) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const base64 = reader.result.split(',')[1];
+        const ext = file.name.split('.').pop().toLowerCase();
+        const safeName = file.name.replace(/[^a-z0-9.\-_]/gi, '-').toLowerCase();
+        const path = `src/images/uploads/${Date.now()}-${safeName}`;
+        if(onProgress) onProgress(40);
+        await gh(`/repos/${OWNER}/${REPO}/contents/${path}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            message: `Upload image: ${safeName}`,
+            content: base64,
+            branch: BRANCH
+          })
+        });
+        if(onProgress) onProgress(100);
+        // Return the public URL via Cloudflare Pages
+        const url = `https://inkedfeed.pages.dev/images/uploads/${Date.now()}-${safeName}`;
+        // Use raw GitHub URL as it's immediately available
+        const rawUrl = `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${path}`;
+        resolve(rawUrl);
+      } catch(e) { reject(e); }
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    if(onProgress) onProgress(10);
+    reader.readAsDataURL(file);
+  });
+}
+
+function triggerInlineUpload() {
+  document.getElementById('inline-img-input').click();
+}
+
+async function uploadInlineImage(input) {
+  const file = input.files[0];
+  if(!file) return;
+  if(file.size > 5 * 1024 * 1024) return toast('Image must be under 5MB', 'error');
+  const btn = document.getElementById('upload-inline-btn');
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    const url = await uploadImageToGitHub(file, null);
+    const alt = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+    const ta = document.getElementById('f-body');
+    if(ta) {
+      const s = ta.selectionStart || ta.value.length;
+      const ins = `\n![${alt}](${url})\n`;
+      ta.value = ta.value.slice(0, s) + ins + ta.value.slice(s);
+      updatePreview();
+    }
+    toast('🖼 Image uploaded and inserted!', 'success');
+  } catch(e) {
+    toast('Upload failed: ' + e.message, 'error');
+  }
+  btn.textContent = '⬆';
+  btn.disabled = false;
+  input.value = '';
+}
+
+async function uploadFeaturedImage(input) {
+  const file = input.files[0];
+  if(!file) return;
+  if(file.size > 5 * 1024 * 1024) return toast('Image must be under 5MB', 'error');
+  const btn = document.getElementById('featured-upload-btn');
+  const bar = document.getElementById('featured-upload-progress');
+  const fill = document.getElementById('featured-upload-fill');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Uploading…';
+  bar.style.display = 'block';
+  fill.style.width = '0%';
+  try {
+    const url = await uploadImageToGitHub(file, (pct) => { fill.style.width = pct + '%'; });
+    document.getElementById('f-image').value = url;
+    updateImg();
+    toast('🖼 Featured image uploaded!', 'success');
+  } catch(e) {
+    toast('Upload failed: ' + e.message, 'error');
+  }
+  btn.disabled = false;
+  btn.innerHTML = '⬆ Upload Image to GitHub';
+  bar.style.display = 'none';
+  input.value = '';
 }
 
 async function doPublish(isNew, asDraft=false) {
