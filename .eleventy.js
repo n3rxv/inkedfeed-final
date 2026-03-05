@@ -2,11 +2,12 @@ module.exports = function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy("src/images");
   eleventyConfig.addPassthroughCopy("admin");
   eleventyConfig.addCollection("posts", function (collectionApi) {
-    return collectionApi.getFilteredByGlob("src/posts/*.md");
+    return collectionApi.getFilteredByGlob("src/posts/*.md")
+      .filter(post => !post.data.draft);
   });
   eleventyConfig.addCollection("rotatorPosts", function (collectionApi) {
     return collectionApi.getFilteredByGlob("src/posts/*.md")
-      .filter(post => post.data.rotator === true);
+      .filter(post => post.data.rotator === true && !post.data.draft);
   });
 
   return {
