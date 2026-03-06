@@ -12,14 +12,12 @@ layout: layout.liquid
     {% endif %}
   </div>
 
-  {% if heroImage %}
   <figure class="post-hero">
-    <img src="{{ heroImage }}" alt="{{ imageAlt | default: title }}">
+    <img src="{{ heroImage | default: image | default: title | autoImage }}" alt="{{ imageAlt | default: title }}">
     {% if imageCaption %}
     <figcaption class="image-caption">{{ imageCaption }}</figcaption>
     {% endif %}
   </figure>
-  {% endif %}
 
   {{ content }}
 </article>
