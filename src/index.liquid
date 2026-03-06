@@ -33,7 +33,8 @@ title: Inkedfeed
       <article class="post">
         <a class="card-link" href="{{ post.url }}" aria-label="Read post"></a>
         <div class="post-media">
-          <a href="{{ post.url }}"><img alt="Featured image" src="{{ post.data.image | default: post.data.heroImage | default: post.data.title | autoImage }}" /></a>
+          {% assign postImg = post.data.image | default: post.data.heroImage %}
+          <a href="{{ post.url }}"><img alt="Featured image" src="{% if postImg %}{{ postImg }}{% else %}{{ post.data.title | autoImage }}{% endif %}" /></a>
         </div>
         <h3 class="post-title"><a href="{{ post.url }}">{{ post.data.title }}</a></h3>
         <div class="post-meta">
@@ -87,7 +88,8 @@ title: Inkedfeed
       <h3 class="popular-title">Popular this month</h3>
       {% assign firstPost = collections.posts | first %}
       <a class="popular-card" id="popularCard" href="{% if firstPost %}{{ firstPost.url }}{% else %}#{% endif %}">
-        <img id="popularImg" alt="{{ firstPost.data.title }}" src="{{ firstPost.data.image | default: firstPost.data.heroImage | default: firstPost.data.title | autoImage }}"/>
+        {% assign popularImg = firstPost.data.image | default: firstPost.data.heroImage %}
+        <img id="popularImg" alt="{{ firstPost.data.title }}" src="{% if popularImg %}{{ popularImg }}{% else %}{{ firstPost.data.title | autoImage }}{% endif %}"/>
         <div class="popular-card-title" id="popularTitle">{{ firstPost.data.title }}</div>
       </a>
     </div>
