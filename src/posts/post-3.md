@@ -3,8 +3,6 @@ layout: post.liquid
 title: "Getting Started with Tattoos"
 date: 2026-02-10T15:00
 author: ""
-image: "/images/uploads/tattoo-thumb.jpg"
-heroImage: "/images/uploads/tattoo-hero.jpg"
 rotator: true
 ---
 
