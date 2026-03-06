@@ -13,7 +13,7 @@ layout: layout.liquid
   </div>
 
   <figure class="post-hero">
-    <img src="{{ heroImage | default: image | default: title | autoImage }}" alt="{{ imageAlt | default: title }}">
+    <img src="{{ heroImage | default: image | default: title | autoImage }}" alt="{{ imageAlt | default: title }}" onerror="this.src='{{ title | autoImage }}'">
     {% if imageCaption %}
     <figcaption class="image-caption">{{ imageCaption }}</figcaption>
     {% endif %}

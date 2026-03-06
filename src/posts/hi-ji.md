@@ -1,13 +1,13 @@
 ---
 layout: post.liquid
 excerpt: 'This article throws light on India''s geopolitical stand, its view, pros, implications and the way forward.'
-heroImage: 'https://www.hindustantimes.com/ht-img/img/2025/02/13/550x309/modi_trump_white_house_tariff_1739488600878_1739488601200.JPG'
+
 rotator: true
 specialTag: 'International Relations, Geopolitics'
 title: 'India''s geopolitics : The long game'
 date: 2026-02-09T12:55:00.000Z
 author: Ruben
-image: 'https://www.hindustantimes.com/ht-img/img/2025/02/13/550x309/modi_trump_white_house_tariff_1739488600878_1739488601200.JPG'
+
 imageAlt: PM Modi shaking hands with US President Donald Trump
 ---
 
