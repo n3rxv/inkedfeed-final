@@ -87,8 +87,8 @@ title: Inkedfeed
       <h3 class="popular-title">Popular this month</h3>
       {% assign firstPost = collections.posts | first %}
       <a class="popular-card" id="popularCard" href="{% if firstPost %}{{ firstPost.url }}{% else %}#{% endif %}">
-        <img id="popularImg" alt="Popular post" src="https://picsum.photos/800/500?random=41"/>
-        <div class="popular-card-title" id="popularTitle">Quiet Interfaces</div>
+        <img id="popularImg" alt="{{ firstPost.data.title }}" src="{{ firstPost.data.image | default: firstPost.data.heroImage | default: firstPost.data.title | autoImage }}"/>
+        <div class="popular-card-title" id="popularTitle">{{ firstPost.data.title }}</div>
       </a>
     </div>
   </aside>
